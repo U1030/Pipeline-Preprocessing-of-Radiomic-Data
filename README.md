@@ -28,14 +28,79 @@ process_all_patients(root_path,depth)
 process_patient(path)
 ```
 
-#### handle_folder_and_files.py
-
-
 inputs :
 
 path : path to folder containing your patient data 
 depth : depth at which you find patient folder
 if your folder directly leads to patient folders then the depth is 1 if your folder contain fodlers per center for example, and then your patient folders, your depth is 2
+
+
+#### handle_folder_and_files.py
+
+delete,move,copy a file or a folder
+
+#### tidy_series_folders_by_type_of_file.py
+
+if you have nifti, dicom : ct and rtstruct in serie folder, organize them further into three separate folder
+
+```
+process_all_patients(root_path,depth)
+```
+
+```
+process_patient(path)
+```
+
+inputs :
+
+path : path to folder containing your patient data 
+depth : depth at which you find patient folder
+
+### conversion
+
+#### convert_dicom_nifti.py
+
+For the convertion of DICOM files into nifti format I use a pipeline developed by Alexandre Carre<sup>123</sup> 
+
+https://github.com/U1030/DS2nii.git 
+
+Please follow the installation steps described on the deposit and activate the environment before using the Step_3.py
+```
+1. U1030 Radiothérapie Moléculaire, Université Paris-Sud, Gustave Roussy, Inserm, Université Paris-Saclay, 94800, Villejuif, France
+2. Université Paris Sud, Université Paris-Saclay, F-94270 Le Kremlin-Bicêtre, France
+3. Gustave Roussy, Université Paris-Saclay, Department of Medical Physics, F-94805, Villejuif, France
+```
+run the following comand (before executing this step) 
+
+```
+conda activate DS2nii 
+```
+
+NOTE :  possible to use for one folder or several processed in parralel
+
+```
+convert_one_patient(patient_path)
+```
+```
+process_all_patients(path, depth,direct)
+```
+
+
+path : path to folder containing your patient data 
+depth : depth at which you find patient folder
+direct : bool, if your patient folders can be found direclty is path then True else False
+
+output : the nifti files 
+
+once you are done with the conversion don't forget to deactivate the environment
+
+```
+conda deactivate DS2nii 
+```
+
+#### convert_dicom_nrrd.py
+#### export_to_nifti_solution_artefact
+
 
 
 - preprocess, convert and analyze DICOM (CT and RTSTRUCT) database 
@@ -61,25 +126,10 @@ The code detect the 2 scenarios outside of correct overlap as previously defined
 - no overlap : the ring doesn't overlap with the tumor 
 
 
-
-
-
 ## Preprocess, convert and analyze DICOM (CT and RTSTRUCT) files 
 
-One of steps involves convertion of DICOM files into nifti format and uses a pipeline developed by Alexandre Carre<sup>123</sup> 
-
-https://github.com/U1030/DS2nii.git 
-
-Please follow the installation steps described on the deposit and activate the environment before using the Step_3.py
-```
-1. U1030 Radiothérapie Moléculaire, Université Paris-Sud, Gustave Roussy, Inserm, Université Paris-Saclay, 94800, Villejuif, France
-2. Université Paris Sud, Université Paris-Saclay, F-94270 Le Kremlin-Bicêtre, France
-3. Gustave Roussy, Université Paris-Saclay, Department of Medical Physics, F-94805, Villejuif, France
-```
 
 
-
-### Step 2 : Deleting CT series with no corresponding RTSRUCT files and folders that are empty after doing so
 
 Produces a txt file with the list of CT series with no corresponding RTSTRUCT file
 
@@ -105,6 +155,7 @@ output : the nifti files
 ```
 conda deactivate DS2nii 
 ```
+
 
 ### Step 4 : Further tidy the files within the serie folder to create 4 folders :
 
@@ -168,47 +219,6 @@ Data folder/ center/ patient folders the depth would be 2
 
 direct : bool  if True it means the data folder immediatly lead to patient folders
 
-
-### generate_report
-
-This script allows to generate an excel file containing : patient id , time , tumor mask, ring mask, complete overlap, no overlap, same size, several components
-It requires results from other scripts of the pipeline, namely : check_rings_v2.py, detect_nifti_mask_with_several_components.py. The report produced is an excel file with one line per lesion. 
-
-
-### Usage
-
-## Command Line Arguments with main.py
-
-The script supports the following command line arguments:
-
-    --path: Path to the input data directory.
-    --output_path: Path to store output data (optional).
-    --complete_overlap_mask_path: Path to complete overlap mask (optional).
-    --no_overlap_mask_path: Path to no overlap mask (optional).
-    --same_size_mask_path: Path to same size mask (optional).
-    --check_ring_results_path: Path to check ring results (optional).
-    --depth: Depth at which patient folders are found (default: 2).
-    --direct: Boolean indicating if the provided path leads directly to patient folders.
-
-Steps
-
-Execute specific steps using the --step argument:
-
-    1: Tidy files into structured folders.
-    2: Delete DICOM series without RTSTRUCT files.
-    3: Convert DICOM to NIfTI format.
-    4: Tidy files within series per type.
-    5: Resample NIfTI files.
-    delete_external_contours: Delete external contours.
-    generate_reports: Generate problem reports.
-    rename_tx: Rename NIfTI files with TX prefix.
-    check_number_off_components: Check number of components in NIfTI masks.
-
-
-Example usage:
-
-```
-python main.py --path <input_data_path> --step <step_number> [--output_path <output_data_path>] [--complete_overlap_mask_path <complete_overlap_mask_path>] [--no_overlap_mask_path <no_overlap_mask_path>] [--same_size_mask_path <same_size_mask_path>] [--check_ring_results_path <check_ring_results_path>] [--depth <depth>] [--direct <direct>]
 
 ```
 
