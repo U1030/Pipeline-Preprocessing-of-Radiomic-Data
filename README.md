@@ -1,6 +1,42 @@
 # Radiomic Data Pre-Processing Pipeline
 
-<p> This pipeline constitute of four main functionalities :
+<p> First step :
+
+Add the pipeline path to sys.path so that your python compilator find all the modules of the pipeline : go to module handle_paths execute comand in terminal 
+
+```
+python add_pipeline_path.py /home/user/my_project/pipeline
+```
+
+### handle folder architecture : 
+
+#### define_architecture_patients.py
+
+It is good to start by organizing your files and standardize the architecture across patients
+
+Patient_ID --> 
+              Time --> 
+                      Serie ID  
+
+NOTE : assumes data is arranged in folder by patient
+
+```
+process_all_patients(root_path,depth)
+```
+
+```
+process_patient(path)
+```
+
+#### handle_folder_and_files.py
+
+
+inputs :
+
+path : path to folder containing your patient data 
+depth : depth at which you find patient folder
+if your folder directly leads to patient folders then the depth is 1 if your folder contain fodlers per center for example, and then your patient folders, your depth is 2
+
 
 - preprocess, convert and analyze DICOM (CT and RTSTRUCT) database 
 - check ring masks
@@ -25,39 +61,7 @@ The code detect the 2 scenarios outside of correct overlap as previously defined
 - no overlap : the ring doesn't overlap with the tumor 
 
 
-## Installation of the environement 
 
-
-* install python's virtualenv
-```
-sudo pip install virtualenv
-```
-* parse the path to the python3 interpreter
-```
-export PY2PATH=$(which python3)
-```
-* create a virtualenv with such python3 interpreter named "venv"
-(common name, already found in .gitignore)
-```
-virtualenv -p $PY2PATH venv 
-```
-* activate the virtualenv
-```
-source venv/bin/activate
-```
-* if you want to do IV Contrast prediction on CT DICOM
-```
-cd DeepContrast
-pip install -r requirements.txt
-```
-* once the virtualenv is activated, install the dependencies
-```
-pip install -r requirements.txt
-```
-The virtual environment can be deactivated by running:
-```
-deactivate
-```
 
 
 ## Preprocess, convert and analyze DICOM (CT and RTSTRUCT) files 
@@ -74,16 +78,6 @@ Please follow the installation steps described on the deposit and activate the e
 ```
 
 
-### Step 1 : Tidying files into folders with following architecture : 
-
-Patient_ID --> 
-              Time --> 
-                      Serie ID  
-
-
-input : path to patient data 
-
-NOTE : assumes data is arranged in folder by patient
 
 ### Step 2 : Deleting CT series with no corresponding RTSRUCT files and folders that are empty after doing so
 
