@@ -99,16 +99,120 @@ conda deactivate DS2nii
 ```
 
 #### convert_dicom_nrrd.py
+
+
 #### export_to_nifti_solution_artefact
 
+The previously introduced pipeline DS2nii seems to be defective on CT that contain artefacts (when the patient has a piece of metal), it changes the intensity values of the voxels, this code aims to convert the CT serie that wasn't correclty converted by DS2nii
+
+```
+GetImage(dicom_path,output_path,save=True)
+```
+
+### missing data
+
+#### find_CT_series_with_missing_RTSTRUCT_file.py
+
+```
+main(path)
+```
+path : path to folder containing your patient data 
+
+output :  print path to CT series with missing RTSTRUCT file
+
+#### problems_with_data.py 
+
+```
+main(dicom_path, nifti_path, output_path)
+```
+
+output : 
+
+- missing_dates.txt
+- missing_roi.txt
+- duplicates.txt
+- missing_nifti_present_in_dicom.txt
 
 
-- preprocess, convert and analyze DICOM (CT and RTSTRUCT) database 
-- check ring masks
-- create ring masks 
-- check and correct ring masks
+### preprocess ROI
 
-The aim of this pipeline is to assess if RTSTRUCT contours are correct in a scenario where you have a tumor and a ring around the tumor. We define correct by the following standards :
+#### resample_nifti.py
+
+```
+resample_patient(patient_path)
+```
+
+```
+resample_all_patients(path, depth = 2, direct =True)
+```
+
+output : resampled file 
+
+new_filename = file + "_RESAMPLED" 
+
+#### rescaling.py
+
+rescaling of voxel intensity (HU)
+
+```
+rescaling_mask(image, mask, lower_bound=-1000, upper_bound=3000)
+```
+
+```
+rescaling_image(image, mask, lower_bound=-1000, upper_bound=3000)
+```
+
+outputs : sitk image
+
+#### spatial_filter.py
+
+
+```
+apply_gaussian_filter(image,sigma)
+
+```
+
+
+```
+apply_wavelet_filter(image,wavelet_type)
+
+```
+
+outputs : sitk image
+
+#### preprocessing.py
+
+complete preprocessing for feature extraction, follows similar steps to LifeX
+
+- resampling to 1*1*1 voxel size 
+- rounding intensity values
+- rescaling intensity values to desired interval default -1000,3000
+- spatial filters optional
+- discretization of intensity values
+
+```
+preprocess_image(image_path,mask_path, filter_type=None, filter_param=None, rescale_range=(-1000, 3000), desired_bin_width = 10 )
+```
+
+outputs : image, mask as sitk images
+
+#### delete_non_resampled.py
+
+Delete nifti files that don't contain 'RESAMPLED'  in their filenames, allows to conserve only resampled files
+
+
+```
+main(path)
+```
+
+### handle roi
+
+
+#### check_rings.py
+
+
+The aim of this script is to assess if RTSTRUCT contours are correct in a scenario where you have a tumor and a ring around the tumor. We define correct by the following standards :
+
 - the ring englobes the tumor
 - the ring overlaps with tumor :
   
@@ -121,245 +225,333 @@ if the tumor is too small ( diameter <= 2mm ) the ring mask completelly overlaps
 <p align="center"><img src="images/tumor_correct_overlap.png" align="middle" width="750" title="Correct Overlap Example" /></p>
 
 
-The code detect the 2 scenarios outside of correct overlap as previously defined :
+The code detect the 3 scenarios outside of correct overlap as previously defined :
 - complete overlap : the tumor is large enough (diameter>2mm) but has no hole
 - no overlap : the ring doesn't overlap with the tumor 
-
-
-## Preprocess, convert and analyze DICOM (CT and RTSTRUCT) files 
-
-
-
-
-Produces a txt file with the list of CT series with no corresponding RTSTRUCT file
-
-input : path to patient data
-
-output : no_RTSTRUCT_file_series_list.txt a list of path to series with no corresponding RTSTRUCT
-
-
-### Step 3 : Convert dicom to nifties 
-   
-run the following comand (before executing this step) 
-
-```
-conda activate DS2nii 
-```
-
-NOTE :  possible to use for one folder or several processed in parralel
-
-input : folder path
-
-output : the nifti files 
-
-```
-conda deactivate DS2nii 
-```
-
-
-### Step 4 : Further tidy the files within the serie folder to create 4 folders :
-
-Optional step : Deleting external contours nifti files
-
-input: yes/no
-
-    - CT
-    - RTSTRUCT
-    - NIFTI
-   
-
-### Step 5 : Resample the nifti files to 1*1*1m³ pixel spacing 
-
-NOTE : possible to use for one folder or several processed in parralel
-
-input : folder path
-
-output : the nifti files resampled with "RESAMPLED" added in the original filename
-
-
-### delete_external_contours:
-
-If you wish to delete nifti mask of external contours 
-
-input : 
-
-path to your data
-
-depth : if the data path doesn't imediatly lead to patient folder provide the depth to reach patient folders for example if your data is organized in the following way :
-Data folder/ center/ patient folders the depth would be 2
-
-direct : bool  if True it means the data folder immediatly lead to patient folders
-
-### rename_tx
-
-If your nifti masks contain TX instead of T0 or T1 this allows to automatically rename them 
-
-
-input : 
-
-path to your data
-
-depth : if the data path doesn't imediatly lead to patient folder provide the depth to reach patient folders for example if your data is organized in the following way :
-Data folder/ center/ patient folders the depth would be 2
-
-direct : bool  if True it means the data folder immediatly lead to patient folders
-
-### check_number_off_components
-
-This script allow to check the number of components of each mask in nifti format
-
-input : 
-
-path to your data
-
-path of output file 
-
-depth : if the data path doesn't imediatly lead to patient folder provide the depth to reach patient folders for example if your data is organized in the following way :
-Data folder/ center/ patient folders the depth would be 2
-
-direct : bool  if True it means the data folder immediatly lead to patient folders
+- ring same size as tumor 
 
 
 ```
+comand = ''
+path = ''
+depth = ''
+direct = True
 
-more specific example usage :
+if comand == 'multiple_folders':
+  process_all_patients(path,depth=depth,direct=direct)
+elif comand  == "folder":
+  process_folder(path)
+
 
 ```
-# Step 1 with default settings
-python main.py --path /data/patient_images --step 1
-
-# Step 2 with specified output path
-python main.py --path /data/patient_images --step 2 --output_path /data/output
-
-# Generate report with all optional paths specified
-python main.py --path /data/patient_images --step generate_report --output_path /data/output --complete_overlap_mask_path /data/masks/complete --no_overlap_mask_path /data/masks/no_overlap --same_size_mask_path /data/masks/same_size --check_ring_results_path /data/results/ring_checks
-
-# Check number of components with default depth and direct settings
-python main.py --path /data/patient_images --step check_number_off_components --output_path /data/output
-```
-
-## Check ring masks
-
-This code allows to go over your masks (in the nifti format) and check if the overlap is correct between the ring and the tumor. 
-
-input : 
-path to your data, path for the output files
-depth : if the data path doesn't imediatly lead to patient folder provide the depth to reach patient folders for example if your data is organized in the following way :
-Data folder/ center/ patient folders the depth would be 2
-
-direct : bool  if True it means the data folder immediatly lead to patient folders
-
-outputs : in txt format at the desired path
-
-- list of masks with no overlap  
-- list of masks with complete overlap 
-- list of masks where tumor and ring are the same size
-
-WARNING : assumes your nifti files contain GTV in filename for tumor and ring in filename for ring
-
-```
-python3 check_rings_v2.py all_patients /path/to/input /path/to/output
-
-```
-
-
-NOTE : possible to use for one folder or several processed in parralel
-
-input : folder path
 
 outputs :
-- list of masks with no overlap
-- list of masks with complete overlap
-- list of masks where tumor and ring are the same size
-(the lists also will be printed in terminal)
 
+- no overlap lesions recap.txt
+- complete overlap lesions recap.txt
+- same size tumor and ring masks recap.txt
+
+
+#### create_rings.py
+
+Creates a nifti ring mask for every  nifti tumor mask that is missing a ring
+
+```
+comand = 'multiple_folders'
+path = '' 
+
+depth = ""
+direct = True
+tumor_accronym = 'gtv' or 'tum'
+
+if comand == 'multiple_folders':
+  process_all_patients(path,tumor_accronym = 'gtv',depth=depth,direct=direct)
+elif comand  == "folder":
+  process_patient(path, tumor_accronym='gtv')
 
 ```
 
-python3 check_rings_v2.py folder /path/to/folder
+output : a nifti file with name similar to the tumor mask file but replacing tumor accronym by ring
+
+#### check_and_correct.py
+
+Check if the rings are correct if not create new ring mask
+
+```
+comand = ''
+path = ''
+depth = ""
+direct = True
+
+
+if comand == 'multiple_folders':
+  process_all_patients(path,depth=depth,direct=direct)
+elif comand  == "folder":
+  process_patient(path)
 
 ```
 
-## Create ring masks 
+#### delete_external_contours.py
 
-This code allows to go over your tumor masks and construct a ring mask file in nifti format with a correct overlap.
+Some patients have a nifti mask that contours the hole body, if you wish to delete them execute this script
 
-input : 
-path to your data
+```
+main(path)
+```
+
+input : path to the folder containing your patient folders
+
+#### delete_lesions_too_small_diameter.py
+
+delete lesions with diameter smaller than 5.5 mm
+diameter is the smallest distance from the center of mass to the borders *2 
+
+```
+data_path = '' 
+
+nifti_folders = extract.extract_folders_path(data_path, type='nifti')
+
+clean_up_small_lesions(nifti_folders)
+```
+
+#### delete_lesions_too_small_voxel.py
+
+delete lesions that occupy less than 64 voxels (lifeX can't extract features for volumes smaller than 64 voxels)
+
+```
+data_path = '' 
+
+nifti_folders = extract.extract_folders_path(data_path, type='nifti')
+
+clean_up_small_lesions(nifti_folders)
+```
+
+#### check_voxel_intensities
+
+Check if intensity range of nifti corresponds to the original intensity range in the corresponding dicom , if not file is deleted and dicom is translated into nifti again with correct intensity
+
+this script assumes you have tidied your series folders into dicoms, nifti folders
+
+```
+main(path)
+```
+
+#### rename_tx
+
+If your nifti masks contain TX instead of T0/E0 or T1/E1  this allows to automatically rename them 
+
+```
+process_all_patients(path,depth = 2, direct =True)
+```
+
+input : path to your data
+
 depth : if the data path doesn't imediatly lead to patient folder provide the depth to reach patient folders for example if your data is organized in the following way :
 Data folder/ center/ patient folders the depth would be 2
+
 direct : bool  if True it means the data folder immediatly lead to patient folders
 
-output : ring files with same name as tumor files replacing GTV with ring and adding "CREATED" in the filename 
-
-function : process_all_patient(patient_path, depth, direct )
-
-WARNING : assumes your data's architecture is the one defined in main.py
-
-
-NOTE : if you have your own data architecture you can use the following command line to create ring masks  within a folder
-
-input : folder path
-
-outputs : nifti ring masks file with "GTV" replaced by ring and the addition of "CREATED" in filename 
-
-function : process_patient(patient_path)
-
-If you want to vizualize the created ring mask and compare with the original ring mask you can use the script "vizualize_created_masks.py" in utils.
-inputs :
-- original ring mask path
-- created ring mask path
-- image path 
-- tumor mask path
+#### ROI_properties
 
 ```
-python3 vizualize_created_masks.py <original_mask_path> <created_mask_path> <image_path> <tumor_path>
+print_roi_properties(nifti_filepath)
+```
+
+outputs :
+
+print("ROI bounds (x, y, z image coordinate space):")
+print(f"Lower bound: {lower_bound}")
+print(f"Upper bound: {upper_bound}")
+print("size :", size)
+print('origin :', origin)
+print('spacing :', spacing)
+print('direction :', direction)
+
+#### bounding_box.py
+
+Compute a bounding box around your tumor mask (nifti) two options : fixed size, around the tumor.
+
+```
+mask_path = ''
+image_path = ''
+
+box_size_mm = [40, 40, 20]
+
+bb_fixed = compute_bb_fixed_size(image_path, mask_path, box_size_mm)
+bb = compute_bb(mask_path)
 
 ```
 
-<p align="center"><img src="images/compare created and original mask.png" align="middle" width="750" title="Vizualize on scans" /></p>
-
-<p align="center"><img src="images/compare zoomed in original and created masks.png" align="middle" width="750" title="Vizualize zoomed in on pixels of a slice" /></p>
+output : tuple(slice(start, end) for start, end in zip(start_index, end_index))
 
 
-## Check and correct ring masks
+#### detect_nifti_mask_with_several_components.py
 
-this code allows to go over your nifti files, evaluate if overlap between mask and tumor is correct and create a new ring mask nifti file if not. 
+This script allow to check the number of components of each mask in nifti format and decompose the mask in several masks if it contains several components
 
-input : 
-path to your data
-depth : if the data path doesn't imediatly lead to patient folder provide the depth to reach patient folders for example if your data is organized in the following way :
-Data folder/ center/ patient folders the depth would be 2
-direct : bool  if True it means the data folder immediatly lead to patient folders
-
-output : ring files with same name as tumor files replacing GTV with ring and adding "CREATED" in the filename 
-
-function : process_all_patient(patient_path, depth, direct )
-
-WARNING : assumes your data's architecture is the one defined in main.py
-
-NOTE : if you have your own data architecture you can use the following command line to create ring masks when overlap is incorrect within a folder
-
-input : folder path
-
-outputs : nifti ring masks file with "GTV" replaced by ring and the addition of "CREATED" in filename 
-
-function : process_patient(patient_path)
-
-
-## Notes 
-
-If you encounter import problems (a folder within the pipeline isn't recognized by python compiler) it means that the path to the pipeline isn't in the path used by your python compiler. You can fix that with the following code : (add it before the import that aren't working)
 
 ```
-import sys 
-sys.path.append("local path of cloned pipeline")
+path = '' 
+output_path = '' 
+
+process_all_patients(path, output_path)
+
+
+nifti_folders = find.extract_folders_path(path, type='nifti')
+clean_up_nifti_folders(nifti_folders)
 ```
 
-to facilitate this if you need to apply it to all the files in the pipeline you can run the following commands :
+outputs :  new_file_name = f"{base_name}_component_{component_num}.nii.gz" 
+
+
+#### delete_ring_with_no_corresponding_tum.py
+
+delete nifti files of ring mask with no corresponding tumor mask
 
 ```
-cd utils
-python3 add_pipeline_path.py path/of/pipeline/folder/on/your/computer path/of/pipeline/folder/on/your/computer
+path = '' 
+tumor_accronym = 'gtv'
+main(path,tumor_accronym=tumor_accronym)
+
 ```
 
+#### determine_nifti_mask_boundary_points.py
+
+
+```
+calculate_boundary_points(mask_path)
+plot_mask_and_boundary(mask_path, zoom_factor=1.2)
+
+```
+
+output : list of coordinates in 3d array 
+
+#### determine_nifti_mask_center_of_mass.py
+
+```
+get_center_of_mask_spicy(input_image)
+
+plot_mask_and_center(mask_path)
+
+```
+
+input : mask path or sitk image
+
+output : [coord_x,coord_y,coord_z] floats 
+
+
+#### determine_nifti_mask_smallest_diameter.py
+
+```
+calculate_smallest_diameter_and_points(mask_path)
+
+```
+
+outputs : center_of_mass, boundary_points, closest_boundary_point, smallest_radius, smallest_diameter
+
+#### determine_voi_size_in_number_of_pixels.py
+
+
+```
+get_size_of_roi(nifti_path)
+
+
+```
+output : float
+
+```
+extract_nifti_data(cohort_path)
+
+
+```
+
+output : lesions_volume_in_voxels.csv
+
+
+#### extract_mask_voxels_from_image.py
+
+retrives voxel of image in the mask
+
+extract_masked_voxels(image, mask)
+
+output : sitk image
+
+
+### radiomic features extraction
+
+extract radiomic features with pyradiomics
+
+```
+python3 feature_extraction_pyradiomics.py --path --index --output_path
+
+```
+
+index : index of patient id in input path
+
+output : feature_extraction_results.csv
+
+### utils
+
+#### handle_lists.py
+
+
+```
+flatten_list(list_of_lists)
+
+```
+
+
+```
+write_list_to_file(data_list, filename)
+
+```
+
+### data distribution
+
+#### compute_voxel_intensities_distribution
+
+input : path to folder containing your patient folders
+
+output : a plot
+
+```
+main(path)
+
+```
+
+### vizualization
+
+#### find_slices_where_nifti_mask_is.py
+
+```
+find_mask_slice(mask_path)
+
+```
+
+output : center_slice_axial, center_slice_coronal, center_slice_sagittal
+
+#### visualize.py
+
+
+```
+read_and_visualize_single_mask(path)
+
+```
+
+
+```
+plot_with_overlay(image_arr, mask_arr, slice_index, title='Overlay')
+
+```
+
+
+```
+visualize_masks(mask_tumor, mask_ring, title="Masks Visualization")
+
+```
+
+
+```
+visualize_single_mask(mask, title="Mask Visualization")
+
+```
