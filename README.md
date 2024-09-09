@@ -8,7 +8,8 @@ Add the pipeline path to sys.path so that your python compilator find all the mo
 python add_pipeline_path.py /home/user/my_project/pipeline
 ```
 
-<p align="center"><img src="images/initial data.pdf" align="middle" width="750" title="pipeline steps overview" /></p>
+[View PDF](./images/initial data.pdf)
+
 
 ### handle folder architecture : 
 
