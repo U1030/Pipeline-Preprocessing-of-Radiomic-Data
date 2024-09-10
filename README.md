@@ -8,9 +8,9 @@ Add the pipeline path to sys.path so that your python compilator find all the mo
 python add_pipeline_path.py /home/user/my_project/pipeline
 ```
 
-<p align="center"><img src="images/1.png" align="middle" width="750" title="Correct Overlap Example" /></p>
+<p align="center"><img src="images/1.png" align="middle" width="900" title="Correct Overlap Example" /></p>
 
-<p align="center"><img src="images/2.png" align="middle" width="750" title="Correct Overlap Example" /></p>
+<p align="center"><img src="images/2.png" align="middle" width="900" title="Correct Overlap Example" /></p>
 
 
 ### handle folder architecture : 
@@ -226,8 +226,6 @@ The aim of this script is to assess if RTSTRUCT contours are correct in a scenar
 --> 2mm outside the tumor's border
 
 if the tumor is too small ( diameter <= 2mm ) the ring mask completelly overlaps with the tumor : contains no hole. 
-
-<p align="center"><img src="images/tumor_correct_overlap.png" align="middle" width="750" title="Correct Overlap Example" /></p>
 
 
 The code detect the 3 scenarios outside of correct overlap as previously defined :
